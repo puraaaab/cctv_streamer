@@ -15,6 +15,7 @@ const state = {
   soloCamId: null,
   soloPlayer: null,
   soloModeType: "hls",
+  gridBandwidthMode: "hd",
   telemetryTimer: null,
   channelsTimer: null,
   clockTimer: null,
@@ -68,6 +69,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btn-open-upload").addEventListener("click", openUploadModal);
   document.getElementById("btn-generate-demo").addEventListener("click", generateDemoFeed);
   document.getElementById("btn-refresh-streams").addEventListener("click", refreshChannels);
+  const btnBandwidth = document.getElementById("btn-toggle-bandwidth");
+  if (btnBandwidth) {
+    btnBandwidth.addEventListener("click", toggleGridBandwidthMode);
+  }
   document.getElementById("btn-protocols-cheat").addEventListener("click", () => {
     if (state.channels.length > 0) {
       openLinksModal(state.channels[0].channel_id);
@@ -334,8 +339,34 @@ function renderMatrixCards() {
     // Initialize Default Player with WebRTC (sub-150ms latency, zero buffering)
     // with automatic fallback to optimized HLS if needed
     const defaultMode = (window.location.protocol === "https:" && !window.location.hostname.includes("localhost")) ? "hls" : "webrtc";
-    initChannelPlayer(ch.channel_id, defaultMode);
+    const modeToStart = state.gridBandwidthMode === "low" ? "mjpeg" : defaultMode;
+    initChannelPlayer(ch.channel_id, modeToStart);
   });
+}
+
+function toggleGridBandwidthMode() {
+  const isNowLow = state.gridBandwidthMode === "hd";
+  state.gridBandwidthMode = isNowLow ? "low" : "hd";
+
+  const label = document.getElementById("bandwidth-mode-label");
+  const icon = document.getElementById("bandwidth-mode-icon");
+  const defaultMode = (window.location.protocol === "https:" && !window.location.hostname.includes("localhost")) ? "hls" : "webrtc";
+  const targetMode = isNowLow ? "mjpeg" : defaultMode;
+
+  if (label) label.textContent = isNowLow ? "Grid: Low-Bandwidth" : "Grid: HD";
+  if (icon) {
+    icon.className = isNowLow ? "fa-solid fa-gauge-simple" : "fa-solid fa-gauge-high";
+  }
+
+  state.channels.forEach((ch) => {
+    initChannelPlayer(ch.channel_id, targetMode);
+  });
+
+  if (isNowLow) {
+    showToast("Switched grid to Low-Bandwidth Mode (Fast, zero-lag snapshots). Click any camera for Full HD Solo View!", "info");
+  } else {
+    showToast("Switched grid to Full HD streaming mode.", "info");
+  }
 }
 
 function updateChannelStatuses() {
@@ -582,16 +613,20 @@ function startHLSPlayer(channelId, videoEl) {
     const hls = new Hls({
       lowLatencyMode: false,
       backBufferLength: 10,
-      maxBufferLength: 8,
-      maxMaxBufferLength: 15,
-      maxBufferSize: 20 * 1024 * 1024,
+      maxBufferLength: 20,
+      maxMaxBufferLength: 40,
+      maxBufferSize: 30 * 1024 * 1024,
       enableWorker: true,
       liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 6,
+      liveMaxLatencyDurationCount: 8,
+      fragLoadingTimeOut: 25000,
+      manifestLoadingTimeOut: 15000,
+      levelLoadingTimeOut: 15000,
       manifestLoadingMaxRetry: 10,
       manifestLoadingRetryDelay: 1000,
-      fragLoadingMaxRetry: 10,
-      fragLoadingRetryDelay: 1000,
+      fragLoadingMaxRetry: 8,
+      fragLoadingRetryDelay: 500,
+      fragLoadingMaxRetryTimeout: 30000,
     });
 
     hls.loadSource(hlsUrl);
@@ -612,10 +647,16 @@ function startHLSPlayer(channelId, videoEl) {
 
     let hlsFailCount = 0;
     hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.details === "bufferStalledError" || (Hls.ErrorDetails && data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR)) {
+        console.warn(`[${channelId.toUpperCase()}] Buffer stalled on tunnel, recovering load...`);
+        hls.startLoad();
+        if (videoEl.paused) videoEl.play().catch(() => {});
+        return;
+      }
       console.warn(`[${channelId.toUpperCase()}] HLS Event Error:`, data.type, data.details, "fatal:", data.fatal);
       if (data.fatal) {
         hlsFailCount++;
-        if (hlsFailCount >= 3) {
+        if (hlsFailCount >= 4) {
           console.warn(`[${channelId.toUpperCase()}] HLS failed repeatedly, switching to MJPEG fallback`);
           initChannelPlayer(channelId, "mjpeg");
           return;
@@ -1483,16 +1524,20 @@ function startSoloHLS(channelId, vid) {
     const hls = new Hls({
       lowLatencyMode: false,
       backBufferLength: 10,
-      maxBufferLength: 8,
-      maxMaxBufferLength: 15,
-      maxBufferSize: 20 * 1024 * 1024,
+      maxBufferLength: 25,
+      maxMaxBufferLength: 50,
+      maxBufferSize: 40 * 1024 * 1024,
       enableWorker: true,
       liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 6,
+      liveMaxLatencyDurationCount: 8,
+      fragLoadingTimeOut: 25000,
+      manifestLoadingTimeOut: 15000,
+      levelLoadingTimeOut: 15000,
       manifestLoadingMaxRetry: 10,
       manifestLoadingRetryDelay: 1000,
-      fragLoadingMaxRetry: 10,
-      fragLoadingRetryDelay: 1000,
+      fragLoadingMaxRetry: 8,
+      fragLoadingRetryDelay: 500,
+      fragLoadingMaxRetryTimeout: 30000,
     });
 
     state.soloPlayer = { type: "hls", hls };
@@ -1523,10 +1568,16 @@ function startSoloHLS(channelId, vid) {
 
     let hlsFailCount = 0;
     hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.details === "bufferStalledError" || (Hls.ErrorDetails && data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR)) {
+        console.warn("[SOLO] Buffer stalled on tunnel, recovering load...");
+        hls.startLoad();
+        if (vid.paused) vid.play().catch(() => {});
+        return;
+      }
       console.warn("[SOLO HLS]", data.type, data.details, "fatal:", data.fatal);
       if (data.fatal) {
         hlsFailCount++;
-        if (hlsFailCount >= 3) {
+        if (hlsFailCount >= 4) {
           console.warn("[SOLO] HLS multiple errors, auto-falling back to MJPEG");
           showToast(`Switching to instant MJPEG live feed for ${channelId.toUpperCase()}...`, "info");
           initSoloPlayer(channelId, "mjpeg");

@@ -342,9 +342,9 @@ hlsVariant: mpegts
 # Number of HLS segments to keep on the server.
 # Segments allow to seek through the stream.
 # Their number doesn't influence latency.
-hlsSegmentCount: 5
+hlsSegmentCount: 7
 # Minimum duration of each segment.
-hlsSegmentDuration: 1s
+hlsSegmentDuration: 2s
 # Minimum duration of each part.
 # A player usually puts 3 parts in a buffer before reproducing the stream.
 # Parts are used in Low-Latency HLS in place of segments.

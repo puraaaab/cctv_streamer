@@ -525,10 +525,13 @@ async def proxy_hls(channel_id: str, file_path: str, request: Request):
         }
         if "content-type" in res.headers:
             headers["Content-Type"] = res.headers["content-type"]
-        if "cache-control" in res.headers:
+        if file_path.endswith(".ts"):
+            # Enable CDN/Edge caching for immutable video chunks to offload home uplink
+            headers["Cache-Control"] = "public, max-age=60, s-maxage=60, immutable"
+        elif "cache-control" in res.headers:
             headers["Cache-Control"] = res.headers["cache-control"]
         else:
-            headers["Cache-Control"] = "no-cache"
+            headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
 
         return Response(
             content=res.content,
