@@ -9,6 +9,13 @@ echo   CCTV SURVEILLANCE SERVER  -  ONE-CLICK LAUNCHER
 echo ========================================================================
 echo.
 
+REM [0/4] First time run check
+if not exist "%~dp0bin\mediamtx.exe" (
+    echo [!] First time run detected: core streaming binaries missing.
+    echo     Running automated installer first...
+    call "%~dp0install.bat"
+)
+
 REM [1/4] Kill stale processes
 echo [1/4] Cleaning up old processes...
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000" ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1

@@ -43,14 +43,19 @@ A high-performance, GPU-accelerated CCTV & IP Camera Simulator and Video Hosting
 - Python 3.10+
 - FFmpeg installed and in PATH
 
-### 2. Start the Server
+### 1. 1-Click Setup on Any New PC
 ```bash
-# Windows Batch:
-start.bat
+# Clone the repository
+git clone https://github.com/puraaaab/cctv_streamer.git
+cd cctv_streamer
 
-# Or run directly via Python:
-python run_server.py
+# Run the automated installer (sets up pip, MediaMTX, Cloudflare, FFmpeg)
+install.bat
+
+# Launch the surveillance center
+start.bat
 ```
+*(Or simply double-click `start.bat` — it will automatically detect if binaries are missing and run `install.bat` for you!)*
 
 ### 3. Open the Surveillance Control Center
 Open your browser at:

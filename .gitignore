@@ -21,10 +21,9 @@ logs/*
 # Surveillance Videos & Recordings (uploads folder)
 uploads/*
 !uploads/.gitkeep
+!uploads/opt_*.mp4
 *.mov
 *.MOV
-*.mp4
-*.MP4
 *.mkv
 *.MKV
 *.avi
