@@ -1,0 +1,134 @@
+[
+  {
+    "channel_id": "cam1",
+    "name": "CAM-01 [IMG_0111]",
+    "source_filename": "opt_cam1.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam2",
+    "name": "CAM-02 [IMG_0112]",
+    "source_filename": "opt_cam2.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam3",
+    "name": "CAM-03 [IMG_0113]",
+    "source_filename": "opt_cam3.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam4",
+    "name": "CAM-04 [IMG_0114]",
+    "source_filename": "opt_cam4.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam5",
+    "name": "CAM-05 [IMG_0115]",
+    "source_filename": "opt_cam5.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam6",
+    "name": "CAM-06 [GAURAVPATH - KARGIL CHOWK]",
+    "source_filename": "opt_cam6.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam7",
+    "name": "CAM-07 [ROKADIYA HANUMAN - BHATENA C-TURN]",
+    "source_filename": "opt_cam7.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam8",
+    "name": "CAM-08 [ROKADIYA HANUMAN - JOGANIMATA]",
+    "source_filename": "opt_cam8.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam9",
+    "name": "CAM-09 [ROKADIYA HANUMAN - BHATENA]",
+    "source_filename": "opt_cam9.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam10",
+    "name": "CAM-10 [KARGIL CHOWK - FROM LAKE VIEW]",
+    "source_filename": "opt_cam10.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam11",
+    "name": "CAM-11 [KARGIL CHOWK - TOWARDS LAKE VIEW]",
+    "source_filename": "opt_cam11.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  },
+  {
+    "channel_id": "cam12",
+    "name": "CAM-12 [PARLE POINT - SVNIT TRAFFIC]",
+    "source_filename": "opt_cam12.mp4",
+    "encoder": "auto",
+    "osd_enabled": false,
+    "resolution": "native",
+    "bitrate": "1800k",
+    "fps": 30,
+    "loop": true
+  }
+]

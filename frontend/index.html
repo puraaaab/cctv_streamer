@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCTV MATRIX // GPU Multi-Protocol Video Streaming Server</title>
+  <meta name="description" content="GPU-Accelerated CCTV & IP Camera Simulator. Streams uploaded video in RTSP, WebRTC, HLS, SRT, MJPEG, and RTMP formats.">
+  
+  <!-- Modern Surveillance & Tech Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons & HLS.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="cctv-theme">
+  <!-- Top Global Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-radar">
+        <div class="radar-sweep"></div>
+        <i class="fa-solid fa-video-slash brand-icon-cam"></i>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">CCTV MATRIX <span class="badge-gpu">GPU ACCELERATED</span></div>
+        <div class="brand-sub">Multi-Protocol IP Camera Simulator & Video Hosting Engine</div>
+      </div>
+    </div>
+
+    <!-- GPU & System Telemetry Pill -->
+    <div class="telemetry-bar" id="telemetry-bar">
+      <div class="telemetry-item" title="Hardware GPU Status">
+        <i class="fa-solid fa-microchip icon-cyan"></i>
+        <div class="telem-details">
+          <span class="telem-label">GPU ENCODER</span>
+          <span class="telem-value" id="gpu-name-val">Detecting...</span>
+        </div>
+      </div>
+      <div class="telemetry-item" title="GPU Utilization">
+        <i class="fa-solid fa-gauge-high icon-green"></i>
+        <div class="telem-details">
+          <span class="telem-label">GPU LOAD</span>
+          <span class="telem-value" id="gpu-load-val">0%</span>
+        </div>
+      </div>
+      <div class="telemetry-item" title="VRAM Memory Used">
+        <i class="fa-solid fa-memory icon-purple"></i>
+        <div class="telem-details">
+          <span class="telem-label">VRAM</span>
+          <span class="telem-value" id="vram-val">0 / 0 MB</span>
+        </div>
+      </div>
+      <div class="telemetry-item" title="Live Surveillance Channels">
+        <i class="fa-solid fa-tower-broadcast icon-red"></i>
+        <div class="telem-details">
+          <span class="telem-label">ACTIVE FEEDS</span>
+          <span class="telem-value" id="active-feeds-val">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Host IP Selector & Action Buttons -->
+    <div class="header-actions">
+      <div class="ip-selector-group" title="Target IP address used to build stream links">
+        <label for="host-ip-select"><i class="fa-solid fa-network-wired"></i> STREAM HOST:</label>
+        <select id="host-ip-select" class="form-select-sm"></select>
+      </div>
+
+      <!-- Cloudflare Public Tunnel URL -->
+      <div class="tunnel-input-group" title="Paste your Cloudflare tunnel URL to enable shareable public links">
+        <label for="tunnel-url-input"><i class="fa-solid fa-globe"></i> PUBLIC URL:</label>
+        <input type="text" id="tunnel-url-input" class="form-input-sm" placeholder="https://xxxx.trycloudflare.com" autocomplete="off" spellcheck="false">
+        <span class="tunnel-status-dot" id="tunnel-status-dot"></span>
+      </div>
+
+      <button id="btn-open-upload" class="btn btn-primary">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Host Video
+      </button>
+
+      <button id="btn-generate-demo" class="btn btn-secondary" title="Create a synthetic CCTV camera feed">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> + Test Feed
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Surveillance Dashboard Workspace -->
+  <main class="dashboard-main" id="dashboard-main">
+    <!-- Toolbar: View Matrix Selector & Controls -->
+    <section class="matrix-toolbar">
+      <div class="toolbar-left">
+        <span class="section-title"><i class="fa-solid fa-border-all"></i> SURVEILLANCE GRID</span>
+        <div class="grid-presets" id="grid-preset-buttons">
+          <button class="btn-grid" data-grid="1" title="1x1 Single View">1x1</button>
+          <button class="btn-grid active" data-grid="4" title="2x2 Quad View">2x2</button>
+          <button class="btn-grid" data-grid="9" title="3x3 9-Cam Matrix">3x3</button>
+          <button class="btn-grid" data-grid="auto" title="Auto Responsive Grid">AUTO</button>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <button id="btn-refresh-streams" class="btn-tool" title="Refresh Streams">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button id="btn-protocols-cheat" class="btn-tool" title="All Protocol Endpoints & Integration Guide">
+          <i class="fa-solid fa-book-bookmark"></i> Protocol Reference & SDK
+        </button>
+      </div>
+    </section>
+
+    <!-- Surveillance Matrix Feeds Container -->
+    <div class="matrix-grid grid-cols-4" id="matrix-grid">
+      <!-- Live Video Channels Injected Dynamically -->
+    </div>
+
+    <!-- Empty State if no streams -->
+    <div class="empty-matrix hidden" id="empty-matrix">
+      <div class="empty-icon-ring">
+        <i class="fa-solid fa-video-slash"></i>
+      </div>
+      <h2>No Active CCTV Stream Feeds</h2>
+      <p>Upload a video file or generate a synthetic CCTV security test feed to begin multi-protocol streaming.</p>
+      <div class="empty-buttons">
+        <button class="btn btn-primary" onclick="openUploadModal()">
+          <i class="fa-solid fa-upload"></i> Upload Video File
+        </button>
+        <button class="btn btn-secondary" onclick="generateDemoFeed()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Instant Demo Camera
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Dedicated Solo Camera Viewer View (Active when ?cam=camX or clicking Solo View) -->
+  <section class="solo-viewer-container hidden" id="solo-viewer-container">
+    <div class="solo-viewer-header">
+      <div class="solo-nav-left">
+        <button class="btn-solo-back" id="btn-solo-back" onclick="exitSoloView()" title="Return to multi-camera matrix dashboard">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>All Cameras (Matrix Dashboard)</span>
+        </button>
+        <div class="solo-cam-info">
+          <div class="cam-live-dot" id="solo-cam-dot"></div>
+          <span class="solo-cam-title" id="solo-cam-title">CAM-01</span>
+          <span class="cam-id-pill" id="solo-cam-id-pill">CAM1</span>
+          <span class="cam-badge cam-badge-gpu" id="solo-cam-meta">1080p | 30 FPS</span>
+        </div>
+      </div>
+
+      <div class="solo-nav-right">
+        <div class="solo-cam-picker">
+          <label for="solo-cam-select"><i class="fa-solid fa-camera"></i> Switch Cam:</label>
+          <select id="solo-cam-select" class="form-select-sm" onchange="switchSoloCam(this.value)"></select>
+        </div>
+        <button class="btn-share-copy" onclick="copySoloShareLink()" title="Copy Shareable Public Viewer Link">
+          <i class="fa-solid fa-share-nodes"></i> Share Cam
+        </button>
+        <button class="btn-tool" onclick="openLinksModalForSolo()" title="Direct RTSP, HLS, WebRTC stream URLs">
+          <i class="fa-solid fa-link"></i> Stream Links
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Large Cinema Surveillance Stage -->
+    <div class="solo-stage-wrapper">
+      <div class="solo-video-stage" id="solo-video-stage">
+        <!-- Main video element -->
+        <video id="solo-vid" class="solo-video-player" autoplay playsinline muted></video>
+        <!-- MJPEG fallback image element -->
+        <img id="solo-img" class="solo-mjpeg-img hidden" alt="MJPEG Live Feed">
+
+        <!-- Click to Play Overlay (for browsers blocking immediate autoplay) -->
+        <div class="solo-play-overlay hidden" id="solo-play-overlay" onclick="resumeSoloPlayback()">
+          <div class="solo-play-card">
+            <div class="solo-play-icon-wrap">
+              <i class="fa-solid fa-play solo-play-icon"></i>
+            </div>
+            <div class="solo-play-title">CLICK TO START LIVE STREAM</div>
+            <div class="solo-play-sub">Browser autoplay was paused. Tap anywhere to start watching.</div>
+          </div>
+        </div>
+
+        <!-- Connecting / Buffering Indicator -->
+        <div class="solo-loading-indicator" id="solo-loading-indicator">
+          <div class="solo-radar-spinner">
+            <div class="radar-sweep"></div>
+            <i class="fa-solid fa-satellite-dish solo-spinner-icon"></i>
+          </div>
+          <div class="solo-loading-text" id="solo-loading-text">CONNECTING TO LIVE FEED...</div>
+        </div>
+
+        <!-- High-Tech Surveillance OSD Overlay -->
+        <div class="osd-overlay solo-osd">
+          <div class="osd-top">
+            <div class="osd-rec">
+              <div class="osd-rec-dot"></div>
+              <span id="solo-osd-cam-name">CAM-01</span>
+            </div>
+            <div class="osd-clock live-time-clock" id="solo-clock">--:--:--</div>
+          </div>
+          <div class="osd-bottom">
+            <span class="osd-stat" id="solo-stat-bottom">CH: CAM1 | 1920x1080 | H.264</span>
+            <span class="osd-stat" id="solo-telemetry" style="color:var(--cyan-core);font-weight:700;">CONNECTING...</span>
+            <span class="osd-stat" id="solo-uptime">UPTIME: --</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solo Player Control Bar -->
+      <div class="solo-control-bar">
+        <div class="solo-controls-left">
+          <div class="solo-protocol-pills">
+            <span class="solo-protocol-label"><i class="fa-solid fa-sliders"></i> Protocol:</span>
+            <button class="btn-mode active" id="solo-btn-hls" onclick="setSoloMode('hls')">HLS (HD Broadcast)</button>
+            <button class="btn-mode" id="solo-btn-webrtc" onclick="setSoloMode('webrtc')">WebRTC (Low Latency)</button>
+            <button class="btn-mode" id="solo-btn-mjpeg" onclick="setSoloMode('mjpeg')">MJPEG (Universal)</button>
+          </div>
+        </div>
+
+        <div class="solo-controls-right">
+          <button class="btn-solo-action" id="solo-mute-btn" onclick="toggleSoloMute()" title="Mute / Unmute Audio">
+            <i class="fa-solid fa-volume-xmark" id="solo-mute-icon"></i>
+            <span id="solo-mute-text">Unmute</span>
+          </button>
+          <button class="btn-solo-action" onclick="downloadSoloSnapshot()" title="Capture High-Res Frame Snapshot">
+            <i class="fa-solid fa-camera"></i> Snapshot
+          </button>
+          <button class="btn-solo-action" onclick="reloadSoloStream()" title="Reload Stream">
+            <i class="fa-solid fa-arrows-rotate"></i> Reconnect
+          </button>
+          <button class="btn-solo-action" onclick="toggleSoloFullscreen()" title="Fullscreen Video Mode">
+            <i class="fa-solid fa-expand"></i> Fullscreen
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Upload & Host Video Modal -->
+  <div class="modal-overlay hidden" id="modal-upload">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-film icon-cyan"></i> Upload Video & Configure CCTV Stream
+        </div>
+        <button class="btn-close" onclick="closeUploadModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Drag and drop zone -->
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" accept="video/*,.mp4,.mkv,.avi,.mov,.flv,.ts,.webm,.m4v" hidden>
+          <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+          <p class="drop-text">Drag & Drop CCTV Footage or Video Files Here</p>
+          <span class="drop-sub">Supported formats: MP4, MKV, AVI, MOV, FLV, TS, WEBM, M4V</span>
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click()">
+            <i class="fa-solid fa-folder-open"></i> Browse Files
+          </button>
+          <div class="selected-file-badge hidden" id="selected-file-badge">
+            <i class="fa-solid fa-file-video"></i> <span id="selected-file-name"></span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+          </div>
+          <div class="progress-status" id="progress-status">Uploading & Initializing GPU Pipeline...</div>
+        </div>
+
+        <!-- Stream Configuration Options -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label><i class="fa-solid fa-tag"></i> Channel Identifier (URL Path):</label>
+            <input type="text" id="cfg-channel-id" class="form-input" placeholder="e.g. cam_entrance, lobby_nvr">
+            <small class="form-hint">Used in URLs: <code>rtsp://host:8554/cam_entrance</code></small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-camera"></i> Camera Name (OSD Display):</label>
+            <input type="text" id="cfg-camera-name" class="form-input" placeholder="e.g. CAM-01 [MAIN ENTRANCE]">
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-microchip"></i> Transcoding Engine:</label>
+            <select id="cfg-encoder" class="form-select">
+              <option value="auto" selected>Auto GPU (MediaFoundation Hardware / NVENC)</option>
+              <option value="gpu_nvenc">NVIDIA NVENC Hardware Encoder</option>
+              <option value="cpu">CPU Ultra-Fast (libx264)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-expand"></i> Output Resolution:</label>
+            <select id="cfg-resolution" class="form-select">
+              <option value="native" selected>Native Source Resolution</option>
+              <option value="1920x1080">1080p FHD (1920x1080)</option>
+              <option value="1280x720">720p HD (1280x720)</option>
+              <option value="640x360">360p Low Bandwidth (640x360)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-sliders"></i> Stream Bitrate:</label>
+            <select id="cfg-bitrate" class="form-select">
+              <option value="2000k">2,000 kbps (2 Mbps - Low Bandwidth)</option>
+              <option value="4000k" selected>4,000 kbps (4 Mbps - Standard CCTV HD)</option>
+              <option value="6000k">6,000 kbps (6 Mbps - High Quality 1080p)</option>
+              <option value="10000k">10,000 kbps (10 Mbps - Ultra High Bitrate)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-clock"></i> Frame Rate (FPS):</label>
+            <select id="cfg-fps" class="form-select">
+              <option value="15">15 FPS (Classic CCTV rate)</option>
+              <option value="25" selected>25 FPS (PAL / Security Standard)</option>
+              <option value="30">30 FPS (NTSC Smooth)</option>
+              <option value="60">60 FPS (Ultra Smooth)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-toggles">
+          <label class="toggle-control">
+            <input type="checkbox" id="cfg-osd" checked>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><i class="fa-solid fa-closed-captioning"></i> Overlay CCTV OSD (Camera Name & Dynamic Timestamp Clock)</span>
+          </label>
+
+          <label class="toggle-control">
+            <input type="checkbox" id="cfg-loop" checked>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label"><i class="fa-solid fa-repeat"></i> Continuous 24/7 Surveillance Loop</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        <button type="button" id="btn-submit-upload" class="btn btn-primary" onclick="submitVideoUpload()">
+          <i class="fa-solid fa-bolt"></i> Upload & Start 24/7 CCTV Feed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stream Links & Protocol Modal -->
+  <div class="modal-overlay hidden" id="modal-links">
+    <div class="modal-card modal-xl">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-satellite-dish icon-cyan"></i> 
+          <span id="links-modal-title">CCTV Protocol Links Hub</span>
+        </div>
+        <button class="btn-close" onclick="closeLinksModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="links-tab-bar">
+          <button class="tab-btn active" data-tab="tab-protocols">
+            <i class="fa-solid fa-link"></i> All Stream Protocol Links (10+ Formats)
+          </button>
+          <button class="tab-btn" data-tab="tab-code-sdk">
+            <i class="fa-solid fa-code"></i> Developer Code Snippets & VMS Config
+          </button>
+        </div>
+
+        <!-- Tab 1: Protocols Table -->
+        <div class="tab-content active" id="tab-protocols">
+          <p class="tab-description">
+            Click any link or the copy button to copy the direct URL for VLC, OBS, Frigate, Milestone, OpenCV, or web applications.
+          </p>
+          <div class="protocols-list" id="protocols-container">
+            <!-- Dynamically populated protocol cards -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Code Snippets & VMS Integration -->
+        <div class="tab-content" id="tab-code-sdk">
+          <div class="code-snippets-container">
+            <!-- Python OpenCV -->
+            <div class="snippet-card">
+              <div class="snippet-header">
+                <span><i class="fa-brands fa-python icon-yellow"></i> Python OpenCV RTSP Capture</span>
+                <button class="btn-copy-code" onclick="copySnippet('code-opencv')"><i class="fa-solid fa-copy"></i> Copy</button>
+              </div>
+              <pre><code id="code-opencv">import cv2
+
+rtsp_url = "rtsp://localhost:8554/cam1"
+cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    cv2.imshow("CCTV Live Feed", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()</code></pre>
+            </div>
+
+            <!-- VLC Media Player Command -->
+            <div class="snippet-card">
+              <div class="snippet-header">
+                <span><i class="fa-solid fa-play-circle icon-orange"></i> VLC Network Stream Launch Command</span>
+                <button class="btn-copy-code" onclick="copySnippet('code-vlc')"><i class="fa-solid fa-copy"></i> Copy</button>
+              </div>
+              <pre><code id="code-vlc">vlc --network-caching=150 rtsp://localhost:8554/cam1</code></pre>
+            </div>
+
+            <!-- Frigate NVR YAML Config -->
+            <div class="snippet-card">
+              <div class="snippet-header">
+                <span><i class="fa-solid fa-shield-halved icon-cyan"></i> Frigate NVR YAML Configuration</span>
+                <button class="btn-copy-code" onclick="copySnippet('code-frigate')"><i class="fa-solid fa-copy"></i> Copy</button>
+              </div>
+              <pre><code id="code-frigate">cameras:
+  cctv_camera_1:
+    ffmpeg:
+      inputs:
+        - path: rtsp://localhost:8554/cam1
+          roles:
+            - detect
+            - record
+    detect:
+      width: 1280
+      height: 720
+      fps: 25</code></pre>
+            </div>
+
+            <!-- Home Assistant Generic Camera -->
+            <div class="snippet-card">
+              <div class="snippet-header">
+                <span><i class="fa-solid fa-house-signal icon-blue"></i> Home Assistant Configuration</span>
+                <button class="btn-copy-code" onclick="copySnippet('code-ha')"><i class="fa-solid fa-copy"></i> Copy</button>
+              </div>
+              <pre><code id="code-ha">camera:
+  - platform: generic
+    name: CCTV Entrance
+    still_image_url: http://localhost:8000/api/stream/cam1/snapshot.jpg
+    stream_source: rtsp://localhost:8554/cam1</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeLinksModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Stream Logs & Diagnostics Modal -->
+  <div class="modal-overlay hidden" id="modal-logs">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-terminal icon-cyan"></i> 
+          <span id="logs-modal-title">Camera Pipeline Diagnostics & Live Logs</span>
+        </div>
+        <button class="btn-close" onclick="closeLogsModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="logs-stats-bar" style="display:flex;gap:12px;margin-bottom:12px;background:rgba(0,0,0,0.4);padding:8px 12px;border-radius:4px;font-family:var(--font-mono);font-size:12px;"></div>
+        <pre id="logs-terminal" style="background:#020617;color:#38bdf8;padding:12px;border-radius:6px;max-height:360px;overflow-y:auto;font-family:var(--font-mono);font-size:11px;line-height:1.5;white-space:pre-wrap;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="refreshCurrentLogs()"><i class="fa-solid fa-rotate"></i> Refresh Logs</button>
+        <button type="button" class="btn btn-secondary" onclick="closeLogsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Script logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

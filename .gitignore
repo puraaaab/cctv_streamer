@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+venv/
+env/
+
+# Binaries & Executables
+bin/*.exe
+bin/*.zip
+*.exe
+*.dll
+
+# Logs & Runtime telemetry
+logs/*
+!logs/.gitkeep
+*.log
+
+# Surveillance Videos & Recordings (uploads folder)
+uploads/*
+!uploads/.gitkeep
+*.mov
+*.MOV
+*.mp4
+*.MP4
+*.mkv
+*.MKV
+*.avi
+*.AVI
+*.ts
+*.webm
+*.flv
+*.m4v
+
+# Temporary & Sensitive files
+*.key
+*.crt
+*.pem
+cookies.txt
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.bak
+*.old
